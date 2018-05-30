@@ -25,3 +25,4 @@
 6. Test Case: This project has been tested only on Chrome
 
 7. I had problems with the Map on IronHacks ID, I solved that loading the map Synchronously.
+  I had problem with the dataset of galleries because is too large and slow for download

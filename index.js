@@ -4,8 +4,6 @@ const API_KEY = "AIzaSyCKLOC2nNGCag9x82Xj206A5h5VhxVTCXA";
 var map;
 var coordenadasNYU={lat:40.7291, lng:-73.9965};
 var marcadorNYU;
-var dService;
-var dRenderer;
 
 var feat = [];
 
@@ -23,9 +21,6 @@ function initMap() {
     title: 'NYU',
     icon: "https://www.shareicon.net/data/48x48/2015/09/21/644210_university_512x512.png"
   });
-
-  dService = new google.maps.DirectionsService();
-  dRenderer = new google.maps.DirectionsRenderer();
 
   map.data.loadGeoJson(
     'http://services5.arcgis.com/GfwWNkhOj9bNBqoJ/arcgis/rest/services/nycd/FeatureServer/0/query?where=1=1&outFields=*&outSR=4326&f=geojson'
@@ -49,7 +44,21 @@ function initMap() {
       };
     }
   });
+  map.data.addListener('mouseover', function(event) {
+    map.data.revertStyle();
+    map.data.overrideStyle(event.feature,fDis(event.feature));
+  });
+
 }
+
+function fDis(a) {
+  if (a.getProperty('BoroCD')%100 < 19) {
+    return {fillColor:strokeDis(parseInt(a.getProperty('BoroCD')/100)),fillOpacity:0.3};
+  } else {
+    return {fillOpacity:0};
+  }
+}
+
 getCri();
 
 var markers=[];
@@ -243,7 +252,6 @@ function setMarksNei() {
     var ft = true;
     var md =[];
     var bcdCenter=[];
-
     function centrosDis() {
       if (ft) {
         for (var i = 0; i < feat.length; i++) {
@@ -268,8 +276,10 @@ function setMarksNei() {
               position: bounds.getCenter(),
               label:(feat[i].f.BoroCD%100).toString(),
               map:map,
-              title:boroName(parseInt(feat[i].f.BoroCD/100))
             })
+            /*marcador.addListener('mouseover',function() {
+              polys[parseInt(feat[i].f.BoroCD/100)-1][];
+            });*/
             md.push(marcador);
             var distancia = google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(40.7291, -73.9965),bounds.getCenter());
             infoDis.push([boroName(parseInt(feat[i].f.BoroCD/100)),feat[i].f.BoroCD%100,distancia]);
@@ -277,8 +287,42 @@ function setMarksNei() {
         }
         ft = false;
         marksDis();
+        titleDisMar();
       }
       infoDis = infoDis.sort(compare).reverse();
+    }
+
+    function numero(bcd) {
+      switch (parseInt(bcd/100)) {
+        case 1:
+        return 29+(bcd%100);
+        break;
+        case 2:
+        return 17+(bcd%100);
+        break;
+        case 3:
+        return -1+(bcd%100);
+        break;
+        case 4:
+        return 41+(bcd%100);
+        break;
+        case 5:
+        return 55+(bcd%100);
+        break;
+        default:
+        console.error("error");
+        return 0;
+      }
+    }
+
+    function titleDisMar() {
+      bestDis();
+      setTimeout(function() {
+        for (var i = 0; i < md.length; i++) {
+          var ind =numero(bcdCenter[i][0]);
+          md[i].setTitle(infoRank[ind][0]+" "+infoRank[ind][1] +"\nN° Crimes: "+ crimDis[infoRank[ind][2]-1][2] +"\nCrime Rank: " +infoRank[ind][2]+"\nAffordable Rank: " +infoRank[ind][3]+"\nDistance Rank: " +infoRank[ind][4]);
+        }
+      },200);
     }
 
     function setMapOnAll(arr,map) {
@@ -547,7 +591,7 @@ function setMarksNei() {
               var heat = getHeat();
               heatmap = new google.maps.visualization.HeatmapLayer({
                 data: heat,
-                radius: 60,
+                radius: 70,
                 opacity: 0.38
               });
 
@@ -656,6 +700,7 @@ function setMarksNei() {
           }
 
           var infoAv = [];
+          var infoRank =[];
           var ftb = true;
           function bestDis() {
             if (ftb) {
@@ -665,18 +710,23 @@ function setMarksNei() {
               setTimeout(function() {
                 for (var i = 0; i < 18; i++) {
                   infoAv.push(["Brooklyn", i+1, dataRanks(crimDis,"Brooklyn")[i].rank + dataRanks(infoHous,"Brooklyn")[i].rank + dataRanks(infoDis,"Brooklyn")[i].rank]);
+                  infoRank.push(["Brooklyn", i+1, dataRanks(crimDis,"Brooklyn")[i].rank, dataRanks(infoHous,"Brooklyn")[i].rank, dataRanks(infoDis,"Brooklyn")[i].rank]);
                 }
                 for (var i = 0; i < 12; i++) {
                   infoAv.push(["Bronx", i+1, dataRanks(crimDis,"Bronx")[i].rank + dataRanks(infoHous,"Bronx")[i].rank + dataRanks(infoDis,"Bronx")[i].rank]);
+                  infoRank.push(["Bronx", i+1, dataRanks(crimDis,"Bronx")[i].rank, dataRanks(infoHous,"Bronx")[i].rank, dataRanks(infoDis,"Bronx")[i].rank]);
                 }
                 for (var i = 0; i < 12; i++) {
                   infoAv.push(["Manhattan", i+1, dataRanks(crimDis,"Manhattan")[i].rank + dataRanks(infoHous,"Manhattan")[i].rank + dataRanks(infoDis,"Manhattan")[i].rank]);
+                  infoRank.push(["Manhattan", i+1, dataRanks(crimDis,"Manhattan")[i].rank, dataRanks(infoHous,"Manhattan")[i].rank, dataRanks(infoDis,"Manhattan")[i].rank]);
                 }
                 for (var i = 0; i < 14; i++) {
                   infoAv.push(["Queens", i+1, dataRanks(crimDis,"Queens")[i].rank + dataRanks(infoHous,"Queens")[i].rank + dataRanks(infoDis,"Queens")[i].rank]);
+                  infoRank.push(["Queens", i+1, dataRanks(crimDis,"Queens")[i].rank, dataRanks(infoHous,"Queens")[i].rank, dataRanks(infoDis,"Queens")[i].rank]);
                 }
                 for (var i = 0; i < 3; i++) {
                   infoAv.push(["Staten Island", i+1, dataRanks(crimDis,"Staten Island")[i].rank + dataRanks(infoHous,"Staten Island")[i].rank + dataRanks(infoDis,"Staten Island")[i].rank]);
+                  infoRank.push(["Staten Island", i+1, dataRanks(crimDis,"Staten Island")[i].rank, dataRanks(infoHous,"Staten Island")[i].rank, dataRanks(infoDis,"Staten Island")[i].rank]);
                 }
                 infoAv.sort(compare).reverse();
               },100);
