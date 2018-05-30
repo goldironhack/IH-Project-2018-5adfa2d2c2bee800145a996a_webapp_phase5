@@ -59,8 +59,6 @@ function fDis(a) {
   }
 }
 
-getCri();
-
 var markers=[];
 
 function setMarksNei() {
